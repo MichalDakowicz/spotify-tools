@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Album Picker — Spotify Tools</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            /* Simplistic Spotify-like dark theme (kept from original) */
+            :root {
+                --spotify-green: #1db954;
+                --bg-dark: #121212;
+                --panel: #181818;
+                --muted: #b3b3b3;
+            }
+            html,
+            body {
+                height: 100%;
+            }
+            body {
+                background: var(--bg-dark);
+                color: #fff;
+                font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto,
+                    Arial;
+                margin: 0;
+            }
+            #loginCard,
+            #appCard {
+                background: var(--panel);
+                color: #fff;
+                border-radius: 16px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+                max-width: 680px;
+                margin: 0 auto;
+            }
+            #loginCard svg {
+                color: var(--spotify-green);
+            }
+            .lead {
+                color: var(--muted);
+            }
+            .spotify-btn {
+                background: var(--spotify-green);
+                color: #030303;
+                font-weight: 700;
+                padding: 12px 26px;
+                border-radius: 999px;
+                border: none;
+                cursor: pointer;
+                box-shadow: 0 6px 18px rgba(29, 185, 84, 0.12);
+                transition: transform 0.12s ease, filter 0.12s ease;
+            }
+            .spotify-btn:hover {
+                filter: brightness(1.03);
+                transform: translateY(-1px);
+            }
+            .spotify-btn-outline {
+                background: transparent;
+                color: var(--muted);
+                border: 1px solid rgba(255, 255, 255, 0.06);
+                padding: 10px 18px;
+                border-radius: 999px;
+                cursor: pointer;
+            }
+            #albumDisplay .panel {
+                background: linear-gradient(
+                    180deg,
+                    rgba(255, 255, 255, 0.02) 0%,
+                    rgba(255, 255, 255, 0.01) 100%
+                );
+                padding: 28px;
+                border-radius: 12px;
+            }
+            #albumArt {
+                width: 320px;
+                height: 320px;
+                object-fit: cover;
+                border-radius: 8px;
+                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+            }
+            .spotify-spinner {
+                border-top-color: var(--spotify-green) !important;
+            }
+            .small-muted {
+                color: var(--muted);
+                font-size: 0.92rem;
+            }
+            @media (max-width: 640px) {
+                #albumArt {
+                    width: 220px;
+                    height: 220px;
+                }
+                .spotify-btn {
+                    padding: 10px 18px;
+                }
+            }
+        </style>
+    </head>
+    <body class="min-h-screen flex items-center justify-center p-6">
+        <div class="max-w-2xl w-full">
+            <!-- Login Card -->
+            <div id="loginCard" class="rounded-2xl p-8 text-center">
+                <div class="mb-6">
+                    <svg
+                        class="w-20 h-20 mx-auto text-green-500"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"
+                        />
+                    </svg>
+                </div>
+                <h1 class="text-4xl font-bold mb-2">Random Album Picker</h1>
+                <p class="lead mb-8">
+                    Picks a random album from your Spotify library.
+                </p>
+                <button id="loginBtn" class="spotify-btn">
+                    Connect to Spotify
+                </button>
+            </div>
+
+            <!-- Main App Card -->
+            <div id="appCard" class="hidden rounded-2xl p-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-gray-200 mb-2">
+                        Your Random Album
+                    </h1>
+                    <p class="text-gray-400">
+                        Click the button to pick a random album from your
+                        library
+                    </p>
+                </div>
+
+                <!-- Album Display -->
+                <div id="albumDisplay" class="hidden mb-8">
+                    <div class="panel text-center mx-auto">
+                        <img
+                            id="albumArt"
+                            src=""
+                            alt="Album Art"
+                            class="mx-auto mb-4"
+                        />
+                        <h2 id="albumName" class="text-2xl font-bold mb-2"></h2>
+                        <p id="artistName" class="lead mb-4"></p>
+                        <a
+                            id="spotifyLink"
+                            href=""
+                            target="_blank"
+                            class="spotify-btn"
+                            rel="noopener"
+                            >Open in Spotify</a
+                        >
+                    </div>
+                </div>
+
+                <!-- Loading -->
+                <div id="loading" class="hidden text-center mb-8">
+                    <div
+                        class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-white/6 spotify-spinner"
+                    ></div>
+                    <p class="small-muted mt-4">Finding your albums...</p>
+                </div>
+
+                <!-- Controls -->
+                <div class="text-center space-x-4">
+                        <div class="mb-4">
+                            <button id="pickBtn" class="spotify-btn">
+                                🎲 Pick Random Album
+                            </button>
+                        </div>
+                        <div class="space-x-4">
+                            <button id="homeBtn" class="spotify-btn-outline" aria-label="Home">Home</button>
+                            <button id="logoutBtn" class="spotify-btn-outline">Logout</button>
+                        </div>
+                </div>
+
+                <!-- Stats -->
+                <div id="stats" class="mt-8 text-center text-gray-400">
+                    <p>
+                        Total albums in library:
+                        <span id="totalAlbums" class="font-bold text-gray-200"
+                            >0</span
+                        >
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <script src="album-picker.js"></script>
+    </body>
+</html>

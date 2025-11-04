@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Spotify Tools — Menu</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            :root {
+                --spotify-green: #1db954;
+                --bg: #0f0f0f;
+                --muted: #b3b3b3;
+            }
+            html,
+            body {
+                height: 100%;
+            }
+            body {
+                background: var(--bg);
+                color: #fff;
+                font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
+                margin: 0;
+                -webkit-font-smoothing: antialiased;
+            }
+            .card {
+                background: #101010;
+                border-radius: 12px;
+                padding: 28px;
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+                max-width: 760px;
+                margin: 24px auto;
+            }
+            a.tool-btn {
+                display: inline-block;
+                background: var(--spotify-green);
+                color: #000;
+                padding: 10px 18px;
+                border-radius: 999px;
+                font-weight: 700;
+                text-decoration: none;
+            }
+            .desc {
+                color: var(--muted);
+            }
+        </style>
+    </head>
+    <body class="min-h-screen flex items-center justify-center p-6">
+        <div class="w-full max-w-3xl">
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold">Spotify Tools</h1>
+                <p class="desc mt-2">
+                    Small collection of lightweight Spotify utilities. Pick a
+                    tool below to open it.
+                </p>
+            </div>
+
+            <div class="card">
+                <h2 class="text-2xl font-semibold mb-2">Album Picker</h2>
+                <p class="desc mb-4">
+                    Picks a random album from your Spotify library.
+                </p>
+                <a class="tool-btn" href="album-picker.html"
+                    >Open Album Picker</a
+                >
+            </div>
+        </div>
+    </body>
+</html>
