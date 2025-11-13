@@ -42,6 +42,38 @@ const statusSection = document.getElementById("statusSection");
 const statusText = document.getElementById("statusText");
 const progressFill = document.getElementById("progressFill");
 
+const linkModal = document.getElementById("linkModal");
+const openLinkModal = document.getElementById("openLinkModal");
+const cancelLinkBtn = document.getElementById("cancelLinkBtn");
+const submitLinkBtn = document.getElementById("submitLinkBtn");
+const artistLinkInput = document.getElementById("artistLinkInput");
+
+// Helper function to add delay
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Helper function to retry fetch with exponential backoff
+async function fetchWithRetry(url, options, maxRetries = 3) {
+    for (let i = 0; i < maxRetries; i++) {
+        const response = await fetch(url, options);
+        
+        // If rate limited (429), wait and retry
+        if (response.status === 429) {
+            const retryAfter = response.headers.get('Retry-After');
+            const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : Math.pow(2, i) * 1000;
+            console.log(`Rate limited. Waiting ${waitTime}ms before retry ${i + 1}/${maxRetries}...`);
+            await delay(waitTime);
+            continue;
+        }
+        
+        return response;
+    }
+    
+    // If all retries failed, make one last attempt
+    return fetch(url, options);
+}
+
 // Generate random string
 function generateRandomString(length) {
     const possible =
@@ -167,7 +199,7 @@ searchInput.addEventListener("input", (e) => {
 
 async function searchArtists(query) {
     try {
-        const response = await fetch(
+        const response = await fetchWithRetry(
             `https://api.spotify.com/v1/search?q=${encodeURIComponent(
                 query
             )}&type=artist&limit=5`,
@@ -235,6 +267,109 @@ function selectArtist(artist) {
     // Show artist section, hide search
     searchSection.classList.add("hidden");
     artistSection.classList.remove("hidden");
+}
+
+// Modal functionality
+openLinkModal.addEventListener("click", () => {
+    linkModal.classList.remove("hidden");
+    artistLinkInput.value = "";
+    artistLinkInput.focus();
+});
+
+cancelLinkBtn.addEventListener("click", () => {
+    linkModal.classList.add("hidden");
+});
+
+// Close modal on overlay click
+linkModal.addEventListener("click", (e) => {
+    if (e.target === linkModal) {
+        linkModal.classList.add("hidden");
+    }
+});
+
+// Keyboard support for modal
+artistLinkInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        submitLinkBtn.click();
+    } else if (e.key === "Escape") {
+        linkModal.classList.add("hidden");
+    }
+});
+
+// Submit artist link
+submitLinkBtn.addEventListener("click", async () => {
+    const input = artistLinkInput.value.trim();
+    
+    if (!input) {
+        alert("Please enter an artist link or URI");
+        return;
+    }
+    
+    // Extract artist ID from various Spotify URL formats
+    const artistId = extractArtistId(input);
+    
+    if (!artistId) {
+        alert("Invalid Spotify artist link. Please make sure you're using a valid artist URL or URI.");
+        return;
+    }
+    
+    try {
+        submitLinkBtn.disabled = true;
+        submitLinkBtn.textContent = "Loading...";
+        
+        const artist = await fetchArtistById(artistId);
+        linkModal.classList.add("hidden");
+        selectArtist(artist);
+    } catch (error) {
+        console.error("Error loading artist:", error);
+        alert("Failed to load artist. Please check the link and try again.");
+    } finally {
+        submitLinkBtn.disabled = false;
+        submitLinkBtn.textContent = "Load Artist";
+    }
+});
+
+// Extract artist ID from Spotify URL or URI
+function extractArtistId(input) {
+    // Match various Spotify URL formats
+    // https://open.spotify.com/artist/1234567890
+    // spotify:artist:1234567890
+    // https://open.spotify.com/intl-es/artist/1234567890
+    
+    const patterns = [
+        /spotify:artist:([a-zA-Z0-9]+)/,
+        /open\.spotify\.com\/(?:intl-[a-z]{2}\/)?artist\/([a-zA-Z0-9]+)/,
+    ];
+    
+    for (const pattern of patterns) {
+        const match = input.match(pattern);
+        if (match) {
+            return match[1];
+        }
+    }
+    
+    // If it's just an ID (alphanumeric string)
+    if (/^[a-zA-Z0-9]{22}$/.test(input)) {
+        return input;
+    }
+    
+    return null;
+}
+
+// Fetch artist by ID
+async function fetchArtistById(artistId) {
+    const response = await fetchWithRetry(
+        `https://api.spotify.com/v1/artists/${artistId}`,
+        {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        }
+    );
+    
+    if (!response.ok) {
+        throw new Error("Failed to fetch artist");
+    }
+    
+    return await response.json();
 }
 
 // Back to search
@@ -343,7 +478,7 @@ async function fetchArtistAlbums() {
     }/albums?include_groups=${includeGroups.join(",")}&limit=50`;
 
     while (url) {
-        const response = await fetch(url, {
+        const response = await fetchWithRetry(url, {
             headers: { Authorization: `Bearer ${accessToken}` },
         });
 
@@ -362,7 +497,7 @@ async function fetchArtistAlbums() {
 
 async function fetchTracksFromAlbums(albums) {
     const tracks = [];
-    const batchSize = 20; // Process albums in batches to avoid rate limits
+    const batchSize = 5; // Reduced batch size to avoid rate limits
 
     for (let i = 0; i < albums.length; i += batchSize) {
         const batch = albums.slice(i, i + batchSize);
@@ -383,6 +518,11 @@ async function fetchTracksFromAlbums(albums) {
             }/${albums.length})`,
             progress
         );
+        
+        // Add a small delay between batches to avoid rate limiting
+        if (i + batchSize < albums.length) {
+            await delay(100);
+        }
     }
 
     return tracks;
@@ -393,7 +533,7 @@ async function fetchAlbumTracks(albumId, albumGroup) {
     let url = `https://api.spotify.com/v1/albums/${albumId}/tracks?limit=50`;
 
     while (url) {
-        const response = await fetch(url, {
+        const response = await fetchWithRetry(url, {
             headers: { Authorization: `Bearer ${accessToken}` },
         });
 
@@ -429,7 +569,7 @@ function removeDuplicateTracks(tracks) {
 }
 
 async function createPlaylist(name) {
-    const response = await fetch(
+    const response = await fetchWithRetry(
         `https://api.spotify.com/v1/users/${userId}/playlists`,
         {
             method: "POST",
@@ -457,7 +597,7 @@ async function addTracksToPlaylist(playlistId, tracks) {
     for (let i = 0; i < trackUris.length; i += batchSize) {
         const batch = trackUris.slice(i, i + batchSize);
 
-        const response = await fetch(
+        const response = await fetchWithRetry(
             `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
             {
                 method: "POST",
@@ -480,6 +620,11 @@ async function addTracksToPlaylist(playlistId, tracks) {
             })`,
             progress
         );
+        
+        // Add a small delay between batches
+        if (i + batchSize < trackUris.length) {
+            await delay(100);
+        }
     }
 }
 

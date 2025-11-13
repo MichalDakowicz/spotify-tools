@@ -137,6 +137,45 @@
                 color: var(--muted);
                 font-size: 0.92rem;
             }
+            .link-text {
+                color: var(--spotify-green);
+                cursor: pointer;
+                text-decoration: underline;
+                font-size: 0.9rem;
+            }
+            .link-text:hover {
+                filter: brightness(1.2);
+            }
+            .modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                padding: 20px;
+            }
+            .modal {
+                background: var(--panel);
+                border-radius: 12px;
+                padding: 28px;
+                max-width: 500px;
+                width: 100%;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            }
+            .modal h2 {
+                margin-bottom: 12px;
+            }
+            .modal-buttons {
+                display: flex;
+                gap: 12px;
+                justify-content: flex-end;
+                margin-top: 20px;
+            }
             @media (max-width: 640px) {
                 .spotify-btn {
                     padding: 10px 18px;
@@ -189,6 +228,11 @@
                         placeholder="Search for an artist..."
                     />
                     <div id="searchResults" class="mt-4 space-y-2"></div>
+                    <div class="text-center mt-3">
+                        <span id="openLinkModal" class="link-text">
+                            Can't find the artist you're looking for?
+                        </span>
+                    </div>
                 </div>
 
                 <!-- Artist Selected Section -->
@@ -282,6 +326,30 @@
                     </button>
                     <button id="logoutBtn" class="spotify-btn-outline">
                         Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Artist Link Modal -->
+        <div id="linkModal" class="modal-overlay hidden">
+            <div class="modal">
+                <h2 class="text-2xl font-bold mb-2">Enter Artist Link</h2>
+                <p class="small-muted mb-4">
+                    Paste a Spotify artist link or URI (e.g., https://open.spotify.com/artist/...)
+                </p>
+                <input
+                    type="text"
+                    id="artistLinkInput"
+                    class="search-input"
+                    placeholder="Paste artist link here..."
+                />
+                <div class="modal-buttons">
+                    <button id="cancelLinkBtn" class="spotify-btn-outline">
+                        Cancel
+                    </button>
+                    <button id="submitLinkBtn" class="spotify-btn">
+                        Load Artist
                     </button>
                 </div>
             </div>
