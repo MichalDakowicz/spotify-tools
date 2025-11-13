@@ -198,6 +198,143 @@
             input[type="checkbox"]:hover {
                 border-color: rgba(255, 255, 255, 0.5);
             }
+            
+            /* Custom Dropdown */
+            .custom-dropdown-wrapper {
+                position: relative;
+            }
+            .custom-dropdown {
+                position: relative;
+            }
+            .custom-dropdown-trigger {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px 16px;
+                background: rgba(255, 255, 255, 0.03);
+                color: #fff;
+                border: 2px solid rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                user-select: none;
+            }
+            .custom-dropdown-trigger:hover {
+                background: rgba(255, 255, 255, 0.05);
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+            .custom-dropdown.active .custom-dropdown-trigger {
+                border-color: var(--spotify-green);
+                background: rgba(255, 255, 255, 0.05);
+                box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.1);
+            }
+            .custom-dropdown-value {
+                flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .custom-dropdown-value.placeholder {
+                color: rgba(255, 255, 255, 0.4);
+            }
+            .custom-dropdown-arrow {
+                width: 16px;
+                height: 16px;
+                color: var(--muted);
+                margin-left: 12px;
+                transition: transform 0.2s ease;
+                flex-shrink: 0;
+            }
+            .custom-dropdown.active .custom-dropdown-arrow {
+                transform: rotate(180deg);
+            }
+            .custom-dropdown-menu {
+                position: absolute;
+                top: calc(100% + 4px);
+                left: 0;
+                right: 0;
+                background: rgba(40, 40, 40, 0.98);
+                border: 2px solid rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+                z-index: 1000;
+                opacity: 0;
+                visibility: hidden;
+                transform: translateY(-10px);
+                transition: all 0.2s ease;
+                max-height: 320px;
+                display: flex;
+                flex-direction: column;
+            }
+            .custom-dropdown.active .custom-dropdown-menu {
+                opacity: 1;
+                visibility: visible;
+                transform: translateY(0);
+            }
+            .custom-dropdown-search {
+                padding: 12px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .custom-dropdown-search input {
+                width: 100%;
+                padding: 8px 12px;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 6px;
+                color: #fff;
+                font-size: 0.9rem;
+            }
+            .custom-dropdown-search input:focus {
+                outline: none;
+                border-color: var(--spotify-green);
+                box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.1);
+            }
+            .custom-dropdown-options {
+                overflow-y: auto;
+                max-height: 240px;
+            }
+            .custom-dropdown-options::-webkit-scrollbar {
+                width: 8px;
+            }
+            .custom-dropdown-options::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.02);
+            }
+            .custom-dropdown-options::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 4px;
+            }
+            .custom-dropdown-options::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.2);
+            }
+            .custom-dropdown-option {
+                padding: 12px 16px;
+                cursor: pointer;
+                transition: background 0.15s ease;
+                border-left: 3px solid transparent;
+            }
+            .custom-dropdown-option:hover {
+                background: rgba(255, 255, 255, 0.08);
+            }
+            .custom-dropdown-option.selected {
+                background: rgba(29, 185, 84, 0.1);
+                border-left-color: var(--spotify-green);
+            }
+            .custom-dropdown-option.selected:hover {
+                background: rgba(29, 185, 84, 0.15);
+            }
+            .custom-dropdown-option-name {
+                color: #fff;
+                font-weight: 500;
+                margin-bottom: 2px;
+            }
+            .custom-dropdown-option-info {
+                color: var(--muted);
+                font-size: 0.85rem;
+            }
+            .custom-dropdown-option.hidden {
+                display: none;
+            }
+            
             .small-muted { color: var(--muted); font-size: 0.92rem; }
             @media (max-width: 640px) {
                 #albumArt { width: 220px; height: 220px; }
@@ -215,7 +352,8 @@
         <script>
             (function() {
                 try {
-                    var has = !!localStorage.getItem('ps_access_token');
+                    // Check for both possible token keys
+                    var has = !!(localStorage.getItem('ps_access_token') || localStorage.getItem('spotify_access_token'));
                     document.documentElement.classList.add(has ? 'ps-show-app' : 'ps-show-login');
                 } catch (e) {
                     // ignore
@@ -256,14 +394,25 @@
 
                 <!-- Playlist Selection -->
                 <div class="mb-6">
-                        <label class="block text-sm text-gray-400 mb-2">Choose a playlist</label>
-                        <div class="select-wrapper">
-                            <select id="playlistSelect" class="custom-select"></select>
-                            <!-- SVG arrow: uses currentColor so it matches .select-arrow color -->
-                            <svg class="select-arrow" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            </svg>
+                    <label class="block text-sm text-gray-400 mb-2">Choose a playlist</label>
+                    <div class="custom-dropdown-wrapper">
+                        <div id="customDropdown" class="custom-dropdown">
+                            <div class="custom-dropdown-trigger">
+                                <span class="custom-dropdown-value">Select a playlist...</span>
+                                <svg class="custom-dropdown-arrow" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </div>
+                            <div class="custom-dropdown-menu">
+                                <div class="custom-dropdown-search">
+                                    <input type="text" id="playlistSearch" placeholder="Search playlists..." />
+                                </div>
+                                <div id="playlistOptions" class="custom-dropdown-options"></div>
+                            </div>
                         </div>
+                        <!-- Hidden select for form compatibility -->
+                        <select id="playlistSelect" style="display: none;"></select>
+                    </div>
                 </div>
 
                 <!-- Loading -->

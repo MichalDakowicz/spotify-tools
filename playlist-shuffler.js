@@ -16,6 +16,11 @@ const loginBtn = document.getElementById("loginBtn");
 const homeBtn = document.getElementById("homeBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const playlistSelect = document.getElementById("playlistSelect");
+const customDropdown = document.getElementById("customDropdown");
+const customDropdownTrigger = customDropdown.querySelector('.custom-dropdown-trigger');
+const customDropdownValue = customDropdown.querySelector('.custom-dropdown-value');
+const playlistOptions = document.getElementById("playlistOptions");
+const playlistSearch = document.getElementById("playlistSearch");
 const loadBtn = document.getElementById("loadBtn");
 const shuffleBtn = document.getElementById("shuffleBtn");
 const trackCountEl = document.getElementById("trackCount");
@@ -123,11 +128,11 @@ async function fetchAllPlaylists() {
             });
             if (!r.ok) throw new Error("Failed to fetch playlists");
             const data = await r.json();
-            playlists = playlists.concat(data.items);
-            url = data.next;
+            playlists = playlists.concat(data.items || []);
+            url = data.next || null; // Ensure url is null if next is undefined
         }
         populatePlaylists();
-        setStatus("Playlists loaded.");
+        setStatus(`Loaded ${playlists.length} playlists.`);
     } catch (err) {
         setStatus("Error: " + err.message, true);
     }
@@ -135,12 +140,55 @@ async function fetchAllPlaylists() {
 
 function populatePlaylists() {
     playlistSelect.innerHTML = "";
-    playlists.forEach((p) => {
+    playlistOptions.innerHTML = "";
+    
+    if (playlists.length === 0) {
+        playlistOptions.innerHTML = '<div class="custom-dropdown-option" style="cursor: default; opacity: 0.5;">No playlists found</div>';
+        return;
+    }
+    
+    playlists.forEach((p, index) => {
+        // Hidden select for compatibility
         const opt = document.createElement("option");
         opt.value = p.id;
         opt.textContent = `${p.name} — ${p.tracks.total} tracks`;
         playlistSelect.appendChild(opt);
+        
+        // Custom dropdown option
+        const optDiv = document.createElement("div");
+        optDiv.className = "custom-dropdown-option";
+        optDiv.dataset.id = p.id;
+        optDiv.dataset.name = p.name.toLowerCase();
+        optDiv.innerHTML = `
+            <div class="custom-dropdown-option-name">${escapeHtml(p.name)}</div>
+            <div class="custom-dropdown-option-info">${p.tracks.total} tracks</div>
+        `;
+        
+        optDiv.addEventListener('click', () => {
+            selectPlaylist(p.id, `${p.name} — ${p.tracks.total} tracks`);
+        });
+        
+        playlistOptions.appendChild(optDiv);
     });
+    
+    // Select first playlist by default
+    if (playlists.length > 0) {
+        selectPlaylist(playlists[0].id, `${playlists[0].name} — ${playlists[0].tracks.total} tracks`);
+    }
+}
+
+function selectPlaylist(id, displayText) {
+    playlistSelect.value = id;
+    customDropdownValue.textContent = displayText;
+    customDropdownValue.classList.remove('placeholder');
+    
+    // Update selected state
+    playlistOptions.querySelectorAll('.custom-dropdown-option').forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.id === id);
+    });
+    
+    // Close dropdown
+    customDropdown.classList.remove('active');
 }
 
 async function fetchPlaylistTracks(playlistId) {
@@ -163,7 +211,7 @@ async function fetchPlaylistTracks(playlistId) {
                     .join(", "),
             }));
             tracks = tracks.concat(items);
-            url = data.next;
+            url = data.next || null; // Ensure url is null if next is undefined
         }
         trackCountEl.textContent = tracks.length;
         setStatus(`Loaded ${tracks.length} tracks.`);
@@ -355,8 +403,8 @@ window.addEventListener("load", async () => {
     }
     if (stored) {
         accessToken = stored;
-        loginCard.classList.add("hidden");
-        appCard.classList.remove("hidden");
+        document.documentElement.classList.remove('ps-show-login');
+        document.documentElement.classList.add('ps-show-app');
         await fetchAllPlaylists();
         return;
     }
@@ -370,8 +418,8 @@ window.addEventListener("load", async () => {
                 document.title,
                 window.location.pathname
             );
-            loginCard.classList.add("hidden");
-            appCard.classList.remove("hidden");
+            document.documentElement.classList.remove('ps-show-login');
+            document.documentElement.classList.add('ps-show-app');
             await fetchAllPlaylists();
         } catch (err) {
             setStatus("Auth failed: " + err.message, true);
@@ -390,8 +438,76 @@ loadBtn.addEventListener("click", async () => {
 function logout() {
     accessToken = null;
     localStorage.removeItem("ps_access_token");
+    localStorage.removeItem("spotify_access_token"); // Also clear the alternate token key
     window.location.href = window.location.pathname;
 }
 
 // expose simple global for debugging if needed
 window.ps = { logout };
+
+// Custom Dropdown Functionality
+customDropdownTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    customDropdown.classList.toggle('active');
+    if (customDropdown.classList.contains('active')) {
+        playlistSearch.focus();
+    }
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    if (!customDropdown.contains(e.target)) {
+        customDropdown.classList.remove('active');
+    }
+});
+
+// Search functionality
+playlistSearch.addEventListener('input', (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    playlistOptions.querySelectorAll('.custom-dropdown-option').forEach(opt => {
+        const name = opt.dataset.name || '';
+        const matches = name.includes(searchTerm);
+        opt.classList.toggle('hidden', !matches);
+    });
+});
+
+// Clear search when dropdown closes
+customDropdown.addEventListener('transitionend', (e) => {
+    if (!customDropdown.classList.contains('active') && e.propertyName === 'opacity') {
+        playlistSearch.value = '';
+        playlistOptions.querySelectorAll('.custom-dropdown-option').forEach(opt => {
+            opt.classList.remove('hidden');
+        });
+    }
+});
+
+// Keyboard navigation for dropdown
+customDropdown.addEventListener('keydown', (e) => {
+    if (!customDropdown.classList.contains('active')) return;
+    
+    const options = Array.from(playlistOptions.querySelectorAll('.custom-dropdown-option:not(.hidden)'));
+    const currentIndex = options.findIndex(opt => opt.classList.contains('selected'));
+    
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const nextIndex = Math.min(currentIndex + 1, options.length - 1);
+        if (options[nextIndex]) {
+            options[nextIndex].scrollIntoView({ block: 'nearest' });
+            options[nextIndex].click();
+        }
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prevIndex = Math.max(currentIndex - 1, 0);
+        if (options[prevIndex]) {
+            options[prevIndex].scrollIntoView({ block: 'nearest' });
+            options[prevIndex].click();
+        }
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (options[currentIndex]) {
+            options[currentIndex].click();
+        }
+    } else if (e.key === 'Escape') {
+        customDropdown.classList.remove('active');
+    }
+});
