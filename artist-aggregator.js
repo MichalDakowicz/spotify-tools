@@ -178,9 +178,20 @@ async function getCurrentUser() {
         headers: { Authorization: `Bearer ${accessToken}` },
     });
 
-    if (!response.ok) throw new Error("Failed to fetch user profile");
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Failed to fetch user profile:", response.status, errorText);
+        throw new Error("Failed to fetch user profile");
+    }
+    
     const data = await response.json();
     userId = data.id;
+    
+    if (!userId) {
+        throw new Error("User ID not found in profile data");
+    }
+    
+    console.log("User ID set:", userId);
 }
 
 // Search for artists
@@ -569,6 +580,10 @@ function removeDuplicateTracks(tracks) {
 }
 
 async function createPlaylist(name) {
+    if (!userId) {
+        throw new Error("User ID not available. Please try logging in again.");
+    }
+    
     const response = await fetchWithRetry(
         `https://api.spotify.com/v1/users/${userId}/playlists`,
         {
@@ -585,7 +600,12 @@ async function createPlaylist(name) {
         }
     );
 
-    if (!response.ok) throw new Error("Failed to create playlist");
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Playlist creation failed:", errorData);
+        throw new Error(`Failed to create playlist: ${response.status} ${response.statusText}`);
+    }
+    
     const data = await response.json();
     return data.id;
 }
