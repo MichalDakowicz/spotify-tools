@@ -1,6 +1,6 @@
 // Spotify Artist Collector JS
 const CLIENT_ID = "2e8c78e744f244758e048cf8311097db";
-const REDIRECT_URI = window.location.origin + window.location.pathname;
+const REDIRECT_URI = window.location.origin + "/callback.html";
 const SCOPES = [
     "user-library-read",
     "playlist-modify-public",
@@ -111,6 +111,7 @@ loginBtn.addEventListener("click", async () => {
 
     localStorage.setItem("code_verifier", codeVerifier);
     localStorage.setItem("auth_state", state);
+    localStorage.setItem("spotify_return_to", window.location.pathname);
 
     const authUrl = new URL("https://accounts.spotify.com/authorize");
     authUrl.searchParams.append("client_id", CLIENT_ID);

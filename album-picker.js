@@ -1,8 +1,8 @@
 // Spotify Album Picker JS (extracted)
 // NOTE: Keep CLIENT_ID updated with your Spotify app client id
 const CLIENT_ID = "2e8c78e744f244758e048cf8311097db";
-// Use the current page as the redirect URI so it works when served as /album-picker.html
-const REDIRECT_URI = window.location.origin + window.location.pathname;
+// Use the central callback page
+const REDIRECT_URI = window.location.origin + "/callback.html";
 const SCOPES = "user-library-read";
 
 let accessToken = null;
@@ -61,6 +61,7 @@ loginBtn.addEventListener("click", async () => {
     // Store code verifier for later use
     localStorage.setItem("code_verifier", codeVerifier);
     localStorage.setItem("auth_state", state);
+    localStorage.setItem("spotify_return_to", window.location.pathname);
 
     const authUrl = new URL("https://accounts.spotify.com/authorize");
     authUrl.searchParams.append("client_id", CLIENT_ID);

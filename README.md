@@ -37,6 +37,50 @@ Collect all tracks from an artist and add them to a playlist.
 -   Creates a new playlist with all collected tracks
 -   Shows progress during collection
 
+### Playlist Analyzer
+
+Analyze your playlists to get detailed statistics and insights.
+
+**Features:**
+
+-   View total tracks, duration, and unique artists
+-   Analyze audio features (energy, danceability, valence, acousticness)
+-   See your top artists in each playlist
+-   Get average track length statistics
+
+### Duplicate Track Finder
+
+Find and remove duplicate tracks from your playlists.
+
+**Features:**
+
+-   Scan any playlist for duplicate tracks
+-   View all duplicates with their positions
+-   Remove individual duplicates or all at once
+-   Keep the first occurrence of each track
+
+### Playlist Merger
+
+Combine multiple playlists into a single playlist.
+
+**Features:**
+
+-   Select multiple playlists to merge
+-   Automatic duplicate removal option
+-   Create new merged playlist with custom name
+-   Choose public or private visibility
+
+### Top Tracks
+
+Export your most played tracks to a new playlist.
+
+**Features:**
+
+-   View your top tracks for different time ranges (4 weeks, 6 months, all time)
+-   Choose how many tracks to export (10, 20, or 50)
+-   Preview your top tracks before creating playlist
+-   Automatically creates playlist with descriptive name
+
 ## Technologies
 
 -   Vanilla JavaScript (no frameworks)

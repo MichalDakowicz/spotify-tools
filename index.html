@@ -28,7 +28,7 @@
                 padding: 28px;
                 box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
                 max-width: 760px;
-                margin: 24px auto;
+                margin: 0 auto 24px auto;
             }
             a.tool-btn {
                 display: inline-block;
@@ -44,8 +44,8 @@
             }
         </style>
     </head>
-    <body class="min-h-screen flex items-center justify-center p-6">
-        <div class="w-full max-w-3xl">
+    <body class="min-h-screen p-6">
+        <div class="w-full max-w-3xl mx-auto py-8">
             <div class="text-center mb-8">
                 <h1 class="text-4xl font-bold">Spotify Tools</h1>
                 <p class="desc mt-2">
@@ -66,14 +66,22 @@
             <div class="card">
                 <h2 class="text-2xl font-semibold mb-2">Playlist Shuffler</h2>
                 <p class="desc mb-4">
-                    Shuffle a playlist and overwrite it or save the shuffled order to a new playlist.
+                    Shuffle a playlist and overwrite it or save the shuffled
+                    order to a new playlist.
                 </p>
-                <a class="tool-btn" href="playlist-shuffler.html">Open Playlist Shuffler</a>
+                <a class="tool-btn" href="playlist-shuffler.html"
+                    >Open Playlist Shuffler</a
+                >
             </div>
             <div class="card">
                 <h2 class="text-2xl font-semibold mb-2">Artist Collector</h2>
-                <p class="desc mb-4">Collect an artist's tracks (albums/singles/appears on) and add them to a playlist.</p>
-                <a class="tool-btn" href="artist-aggregator.html">Open Artist Collector</a>
+                <p class="desc mb-4">
+                    Collect an artist's tracks (albums/singles/appears on) and
+                    add them to a playlist.
+                </p>
+                <a class="tool-btn" href="artist-aggregator.html"
+                    >Open Artist Collector</a
+                >
             </div>
         </div>
     </body>
