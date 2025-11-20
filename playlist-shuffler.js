@@ -1,7 +1,7 @@
 // Playlist Shuffler — client-side PKCE Spotify tool
 // IMPORTANT: replace CLIENT_ID with your Spotify app client id or set it here
 const CLIENT_ID = "2e8c78e744f244758e048cf8311097db";
-const REDIRECT_URI = window.location.origin + "/callback.html";
+const REDIRECT_URI = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + "/callback.html";
 const SCOPES =
     "playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private user-read-private";
 

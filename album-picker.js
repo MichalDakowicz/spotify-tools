@@ -2,7 +2,7 @@
 // NOTE: Keep CLIENT_ID updated with your Spotify app client id
 const CLIENT_ID = "2e8c78e744f244758e048cf8311097db";
 // Use the central callback page
-const REDIRECT_URI = window.location.origin + "/callback.html";
+const REDIRECT_URI = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + "/callback.html";
 const SCOPES = "user-library-read";
 
 let accessToken = null;

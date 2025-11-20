@@ -1,6 +1,6 @@
 // Spotify Artist Collector JS
 const CLIENT_ID = "2e8c78e744f244758e048cf8311097db";
-const REDIRECT_URI = window.location.origin + "/callback.html";
+const REDIRECT_URI = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + "/callback.html";
 const SCOPES = [
     "user-library-read",
     "playlist-modify-public",
